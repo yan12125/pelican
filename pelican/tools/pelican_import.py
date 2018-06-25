@@ -12,7 +12,7 @@ import time
 from codecs import open
 
 from six.moves.urllib.error import URLError
-from six.moves.urllib.parse import urlparse
+from six.moves.urllib.parse import urlparse, unquote
 from six.moves.urllib.request import urlretrieve
 
 # because logging.setLoggerClass has to be called before logging.getLogger
@@ -132,7 +132,7 @@ def get_items(xml):
 
 
 def get_filename(filename, post_id):
-    if filename is not None:
+    if filename is not None and filename != '':
         return filename
     else:
         return post_id
@@ -153,7 +153,7 @@ def wp2fields(xml, wp_custpost=False):
                 title = 'No title [%s]' % item.find('post_name').string
                 logger.warning('Post "%s" is lacking a proper title', title)
 
-            filename = item.find('post_name').string
+            filename = unquote(item.find('post_name').string).strip()
             post_id = item.find('post_id').string
             filename = get_filename(filename, post_id)
 
@@ -727,10 +727,10 @@ def fields2pelican(
 
                 fp.write(new_content)
 
-            parse_raw = '--parse-raw' if not strip_raw else ''
-            cmd = ('pandoc --normalize {0} --from=html'
+            raw_html = '+raw_html' if not strip_raw else ''
+            cmd = ('pandoc --from=html{0}'
                    ' --to={1} -o "{2}" "{3}"')
-            cmd = cmd.format(parse_raw, out_markup,
+            cmd = cmd.format(raw_html, out_markup,
                              out_filename, html_filename)
 
             try:
